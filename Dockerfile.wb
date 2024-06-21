@@ -1,0 +1,16 @@
+# Sử dụng WordPress image từ Docker Hub
+FROM wordpress:latest
+
+# Copy file php.ini từ host vào trong container
+COPY /config/php.conf.ini /usr/local/etc/php/conf.d/php.ini
+COPY /wordpress /var/www/html
+# Thiết lập biến môi trường cho WordPress
+ENV WORDPRESS_DB_NAME wordpress
+ENV WORDPRESS_TABLE_PREFIX wp_
+ENV WORDPRESS_DB_HOST mysql
+ENV WORDPRESS_DB_USER root
+ENV WORDPRESS_DB_PASSWORD password
+
+
+# Port mặc định mà Apache sẽ lắng nghe (không cần expose port 80 vì image wordpress đã làm điều này)
+# EXPOSE 80

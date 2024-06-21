@@ -1,0 +1,12 @@
+# Sử dụng MySQL image từ Docker Hub
+FROM mariadb:${MARIADB_VERSION:-latest}
+COPY /mysql /var/lib/mysql
+# Thiết lập biến môi trường cho MySQL
+ENV MYSQL_ROOT_PASSWORD password
+ENV MYSQL_USER root
+ENV MYSQL_PASSWORD password
+ENV MYSQL_DATABASE wordpress
+
+
+
+# Port mặc định của MySQL đã được expose bởi image mysql, không cần thêm EXPOSE trong Dockerfile

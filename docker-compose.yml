@@ -1,0 +1,92 @@
+version: '3.6'
+services:
+
+  wordpress:
+    # image: 10.32.4.125:5000/wordpress:latest
+    build: 
+      context: .
+      dockerfile: Dockerfile.wb
+    # container_name: ${COMPOSE_PROJECT_NAME:-wordpress}
+    container_name: ${COMPOSE_PROJECT_NAME:-wordpress}_wordpress
+    volumes:
+      - /config/php.conf.ini:/usr/local/etc/php/conf.d/php.ini
+      - ${WORDPRESS_DATA_DIR:-/wordpress}:/var/www/html
+    environment:
+      - WORDPRESS_DB_NAME=${COMPOSE_PROJECT_NAME:-wordpress}
+      - WORDPRESS_TABLE_PREFIX=${WORDPRESS_TABLE_PREFIX:-wp_}
+      - WORDPRESS_DB_HOST=${WORDPRESS_DB_HOST:-mysql}
+      - WORDPRESS_DB_USER=${DATABASE_USER:-root}
+      - WORDPRESS_DB_PASSWORD=${DATABASE_PASSWORD:-password}
+    depends_on:
+      - mysql
+      - phpmyadmin
+    restart: always
+    ports:
+        - 81:80
+    networks:
+      - backend
+
+  mysql:
+    # image: 10.32.4.125:5000/mysql:latest
+    build: 
+      context: .
+      dockerfile: Dockerfile.db
+    container_name: ${COMPOSE_PROJECT_NAME:-wordpress}_mysql
+    volumes:
+      - /mysql:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DATABASE_PASSWORD:-password}
+      - MYSQL_USER=${DATABASE_USER:-root}
+      - MYSQL_PASSWORD=${DATABASE_PASSWORD:-password}
+      - MYSQL_DATABASE=${COMPOSE_PROJECT_NAME:-wordpress}
+    restart: always
+    networks:
+      - backend
+
+  phpmyadmin:
+    image: 10.32.4.125:5000/phpmyadmin:latest
+    depends_on:
+      - mysql
+    build: 
+      context: .
+      dockerfile: Dockerfile.phpAdmin
+    container_name: ${COMPOSE_PROJECT_NAME:-wordpress}_phpmyadmin
+    restart: always
+    ports:
+      - ${PHPMYADMIN_PORT:-8081}:80
+    environment:
+      PMA_HOST: mysql
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-password}
+    networks:
+      - backend
+
+  # Command line interface to wordpress
+  wpcli:
+    build: ./wpcli/
+    image: wpcli
+    # image: 10.32.4.125:5000/wpcli:latest
+    container_name: ${COMPOSE_PROJECT_NAME:-wordpress}_wpcli
+    volumes:
+      - ${WORDPRESS_DATA_DIR:-/wordpress}:/var/www/html
+    working_dir: /var/www/html
+    networks:
+      - backend
+# Check availability of essential services
+  healthcheck:
+    image: wpcli
+    build: ./wpcli/
+    # image: 10.32.4.125:5000/wpcli:latest
+    container_name: ${COMPOSE_PROJECT_NAME:-wordpress}_healthcheck
+    command: sh -c "/wait"
+    environment:
+      - WAIT_HOSTS=mysql:3306, wordpress:80
+      - WAIT_BEFORE_HOSTS=${WAIT_BEFORE_HOSTS:-30}
+      - WAIT_AFTER_HOSTS=${WAIT_AFTER_HOSTS:-15}
+      - WAIT_HOSTS_TIMEOUT=${WAIT_HOSTS_TIMEOUT:-300}
+      - WAIT_SLEEP_INTERVAL=${WAIT_SLEEP_INTERVAL:-30}
+      - WAIT_HOST_CONNECT_TIMEOUT=${WAIT_HOST_CONNECT_TIMEOUT:-30}
+    networks:
+      - backend
+networks:
+  backend:
+    driver: bridge

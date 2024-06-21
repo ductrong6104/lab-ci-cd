@@ -1,0 +1,8 @@
+# Sử dụng phpMyAdmin image từ Docker Hub
+FROM phpmyadmin/phpmyadmin:latest
+
+# Thiết lập biến môi trường cho phpMyAdmin
+ENV PMA_HOST mysql
+ENV MYSQL_ROOT_PASSWORD password
+
+# Port mặc định của phpMyAdmin đã được expose bởi image phpmyadmin, không cần thêm EXPOSE trong Dockerfile
